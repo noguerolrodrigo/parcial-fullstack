@@ -10,7 +10,7 @@ Esta es una aplicación Fullstack desarrollada para el primer parcial de la Tecn
 
 ## Video de Presentación
 En el siguiente enlace se encuentra el video demostrativo de la arquitectura, código fuente y el flujo completo de la aplicación funcionando:
-**Link al video:** [PEGAR LINK DE DRIVE ACÁ]
+**Link al video:** [\[https://youtu.be/3Gg7N9zBcsA\]]
 
 ## Instrucciones de Ejecución
 
