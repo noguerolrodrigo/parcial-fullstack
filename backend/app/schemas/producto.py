@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel
-from typing import Optional, List
+from typing import Optional, List, Any
 
 class ProductoCreate(SQLModel):
     nombre: str
@@ -15,3 +15,4 @@ class ProductoRead(SQLModel):
     precio: float
     descripcion: Optional[str] = None
     categoria_id: Optional[int] = None
+    ingredientes: List[Any] = []

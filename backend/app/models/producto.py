@@ -23,6 +23,10 @@ class Producto(SQLModel, table=True):
     categoria: Optional["Categoria"] = Relationship(back_populates="productos")
     ingrediente_links: List["ProductoIngrediente"] = Relationship(back_populates="producto")
 
+    @property
+    def ingredientes(self):
+        return [link.ingrediente for link in self.ingrediente_links if link.ingrediente]
+
 class ProductoCreate(SQLModel):
     nombre: str = Field(min_length=2, max_length=100)
     precio: float = Field(gt=0)

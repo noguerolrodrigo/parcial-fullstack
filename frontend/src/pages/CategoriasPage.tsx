@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getCategorias, createCategoria, updateCategoria, deleteCategoria } from '../api/api'
-import type { Categoria, CategoriaCreate } from '../api/api'
+import type { Categoria, CategoriaCreate } from '../types'
 
 export default function CategoriasPage() {
   const queryClient = useQueryClient()

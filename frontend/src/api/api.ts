@@ -1,15 +1,7 @@
 import axios from 'axios'
+import type { Categoria, CategoriaCreate, Ingrediente, IngredienteCreate, Producto, ProductoCreate } from '../types';
 
 const api = axios.create({ baseURL: 'http://127.0.0.1:8000' })
-
-export interface Categoria { id: number; nombre: string; descripcion?: string }
-export interface CategoriaCreate { nombre: string; descripcion?: string }
-
-export interface Ingrediente { id: number; nombre: string; unidad: string }
-export interface IngredienteCreate { nombre: string; unidad: string }
-
-export interface Producto { id: number; nombre: string; precio: number; descripcion?: string; categoria_id?: number }
-export interface ProductoCreate { nombre: string; precio: number; descripcion?: string; categoria_id?: number; ingrediente_ids: number[] }
 
 export const getCategorias = () => api.get<Categoria[]>('/categorias/').then(r => r.data)
 export const createCategoria = (data: CategoriaCreate) => api.post<Categoria>('/categorias/', data).then(r => r.data)

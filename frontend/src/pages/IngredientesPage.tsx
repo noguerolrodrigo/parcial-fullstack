@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getIngredientes, createIngrediente, updateIngrediente, deleteIngrediente } from '../api/api'
-import type { Ingrediente, IngredienteCreate } from '../api/api'
+import type { Ingrediente, IngredienteCreate } from '../types'
 
 export default function IngredientesPage() {
   const queryClient = useQueryClient()

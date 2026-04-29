@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getProductos, createProducto, updateProducto, deleteProducto, getCategorias, getIngredientes } from '../api/api'
-import type { Producto, ProductoCreate } from '../api/api'
+import type { Producto, ProductoCreate } from '../types'
 
 export default function ProductosPage() {
   const queryClient = useQueryClient()
@@ -30,7 +30,18 @@ export default function ProductosPage() {
   })
 
   const abrirCrear = () => { setEditando(null); setForm({ nombre: '', precio: 0, descripcion: '', categoria_id: undefined, ingrediente_ids: [] }); setModalOpen(true) }
-  const abrirEditar = (p: Producto) => { setEditando(p); setForm({ nombre: p.nombre, precio: p.precio, descripcion: p.descripcion || '', categoria_id: p.categoria_id, ingrediente_ids: [] }); setModalOpen(true) }
+  const abrirEditar = (p: any) => {
+    setEditando(p);
+    setForm({
+        nombre: p.nombre,
+        precio: p.precio,
+        descripcion: p.descripcion || '',
+        categoria_id: p.categoria_id,
+        // ACÁ ESTÁ LA MAGIA: Extraemos solo los IDs de los ingredientes que ya tiene
+        ingrediente_ids: p.ingredientes ? p.ingredientes.map((i: any) => i.id) : []
+    });
+    setModalOpen(true);
+}
   const cerrarModal = () => { setModalOpen(false); setEditando(null) }
 
   const toggleIngrediente = (id: number) => {
