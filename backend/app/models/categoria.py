@@ -9,13 +9,15 @@ class Categoria(SQLModel, table=True):
     nombre: str = Field(min_length=2, max_length=50)
     descripcion: Optional[str] = Field(default=None, max_length=200)
     
+    # 1. Agregamos la clave foránea que apunta a su propia tabla
+    parent_id: Optional[int] = Field(default=None, foreign_key="categoria.id")
+    
+    # 2. Creamos las relaciones reflexivas (Padre e Hijos/Subcategorías)
+    parent: Optional["Categoria"] = Relationship(
+        back_populates="subcategorias",
+        sa_relationship_kwargs={"remote_side": "Categoria.id"}
+    )
+    subcategorias: List["Categoria"] = Relationship(back_populates="parent")
+    
+    # La relación normal que ya tenías con los productos
     productos: List["Producto"] = Relationship(back_populates="categoria")
-
-class CategoriaCreate(SQLModel):
-    nombre: str = Field(min_length=2, max_length=50)
-    descripcion: Optional[str] = None
-
-class CategoriaRead(SQLModel):
-    id: int
-    nombre: str
-    descripcion: Optional[str] = None

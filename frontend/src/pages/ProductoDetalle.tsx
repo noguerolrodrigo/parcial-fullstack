@@ -1,53 +1,69 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { getProducto, getCategorias } from '../api/api'
+import { getProducto } from '../api/productos'
+import { getCategorias } from '../api/categorias'
 
 export default function ProductoDetalle() {
-    const { id } = useParams()
-    const productoId = parseInt(id as string)
+  const { id } = useParams()
+  
+  // Traemos el producto específico
+  const { data: producto, isLoading: loadingProd, isError: errorProd } = useQuery({ 
+    queryKey: ['producto', id], 
+    queryFn: () => getProducto(Number(id)) 
+  })
 
-    const { data: producto, isLoading, isError } = useQuery({
-        queryKey: ['producto', productoId],
-        queryFn: () => getProducto(productoId),
-    })
+  // Traemos las categorías para poder buscar quién es el padre
+  const { data: categorias } = useQuery({ 
+    queryKey: ['categorias'], 
+    queryFn: getCategorias 
+  })
 
-    const { data: categorias } = useQuery({ 
-        queryKey: ['categorias'], 
-        queryFn: getCategorias 
-    })
+  if (loadingProd) return <p className="text-center mt-10">Cargando...</p>
+  if (errorProd) return <p className="text-center mt-10 text-red-500">Error al cargar el producto</p>
+  if (!producto) return <p className="text-center mt-10">Producto no encontrado</p>
 
-    if (isLoading) return <p className="text-center mt-10">Cargando...</p>
-    if (isError) return <p className="text-center mt-10 text-red-500">Producto no encontrado</p>
+  // Lógica para separar Categoría Principal y Subcategoría
+  let categoriaPrincipal = '-';
+  let subcategoria = '-';
 
-    const categoria = categorias?.find((c: any) => c.id === producto?.categoria_id)
-    
-    // Le decimos a TypeScript que no moleste con la interfaz usando (producto as any)
-    const ingredientesDelProducto = (producto as any)?.ingredientes || []
+  if (producto.categoria_id && categorias) {
+    const cat = categorias.find(c => c.id === producto.categoria_id);
+    if (cat) {
+      if (cat.parent_id) {
+        // Si tiene parent_id, la categoría actual es la subcategoría
+        subcategoria = cat.nombre;
+        const padre = categorias.find(p => p.id === cat.parent_id);
+        categoriaPrincipal = padre ? padre.nombre : '-';
+      } else {
+        // Si no tiene padre, es una categoría principal directamente
+        categoriaPrincipal = cat.nombre;
+      }
+    }
+  }
 
-    return (
-        <div className="max-w-lg mx-auto bg-white rounded shadow p-6">
-            <Link to="/productos" className="text-blue-600 hover:underline mb-4 block">
-                ← Volver a Productos
-            </Link>
-            <h1 className="text-3xl font-bold mb-4">{producto?.nombre}</h1>
-            <p className="text-gray-600 mb-2"><span className="font-semibold">Precio:</span> ${producto?.precio}</p>
-            <p className="text-gray-600 mb-2"><span className="font-semibold">Descripción:</span> {producto?.descripcion || '-'}</p>
-            <p className="text-gray-600 mb-4">
-                <span className="font-semibold">Categoría:</span> {categoria?.nombre || 'Sin categoría'}
-            </p>
-            
-            <div>
-                <p className="font-semibold mb-2">Ingredientes:</p>
-                {ingredientesDelProducto.length > 0 ? (
-                    <ul className="list-disc list-inside">
-                        {ingredientesDelProducto.map((i: any) => (
-                            <li key={i.id}>{i.nombre} ({i.unidad})</li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p className="text-gray-500">Sin ingredientes</p>
-                )}
-            </div>
-        </div>
-    )
+  return (
+    <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow mt-6">
+      <Link to="/productos" className="text-blue-500 hover:underline mb-4 inline-block">&larr; Volver a Productos</Link>
+      
+      <h1 className="text-3xl font-bold mb-4">{producto.nombre}</h1>
+      
+      <p className="mb-2"><span className="font-semibold">Precio:</span> ${producto.precio}</p>
+      <p className="mb-2"><span className="font-semibold">Descripción:</span> {producto.descripcion || '-'}</p>
+      
+      {/* ACÁ AGREGAMOS LOS DOS CAMPOS SEPARADOS */}
+      <p className="mb-2"><span className="font-semibold">Categoría:</span> {categoriaPrincipal}</p>
+      <p className="mb-4"><span className="font-semibold">Subcategoría:</span> {subcategoria}</p>
+      
+      <h2 className="text-xl font-bold mb-2">Ingredientes:</h2>
+      {producto.ingredientes && producto.ingredientes.length > 0 ? (
+        <ul className="list-disc pl-5">
+          {producto.ingredientes.map((ing: any) => (
+            <li key={ing.id}>{ing.nombre} ({ing.unidad})</li>
+          ))}
+        </ul>
+      ) : (
+        <p>No tiene ingredientes asignados.</p>
+      )}
+    </div>
+  )
 }

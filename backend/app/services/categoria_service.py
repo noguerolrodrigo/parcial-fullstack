@@ -1,35 +1,35 @@
-from sqlmodel import Session, select
 from fastapi import HTTPException
+from app.uow import UnitOfWork
+from app.schemas.categoria import CategoriaCreate
 from app.models.categoria import Categoria
-# Cambiamos la importación al nuevo archivo de schemas
-from app.schemas.categoria import CategoriaCreate 
 
-def get_all(session: Session, offset: int = 0, limit: int = 10):
-    return session.exec(select(Categoria).offset(offset).limit(limit)).all()
+def get_all(uow: UnitOfWork, offset: int = 0, limit: int = 10):
+    return uow.categorias.get_all(offset, limit)
 
-def get_by_id(session: Session, categoria_id: int):
-    categoria = session.get(Categoria, categoria_id)
+def get_by_id(uow: UnitOfWork, id: int):
+    categoria = uow.categorias.get_by_id(id)
     if not categoria:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
     return categoria
 
-def create(session: Session, data: CategoriaCreate):
+def create(uow: UnitOfWork, data: CategoriaCreate):
     db_categoria = Categoria.model_validate(data)
-    session.add(db_categoria)
-    session.commit()
-    session.refresh(db_categoria)
+    uow.categorias.add(db_categoria)
+    uow.commit() # El UoW se encarga de guardar
+    uow.session.refresh(db_categoria)
     return db_categoria
 
-def update(session: Session, categoria_id: int, data: CategoriaCreate):
-    db_categoria = get_by_id(session, categoria_id)
+def update(uow: UnitOfWork, categoria_id: int, data: CategoriaCreate):
+    db_categoria = get_by_id(uow, categoria_id)
     datos = data.model_dump(exclude_unset=True)
     db_categoria.sqlmodel_update(datos)
-    session.add(db_categoria)
-    session.commit()
-    session.refresh(db_categoria)
+    
+    uow.categorias.add(db_categoria)
+    uow.commit()
+    uow.session.refresh(db_categoria)
     return db_categoria
 
-def delete(session: Session, categoria_id: int):
-    db_categoria = get_by_id(session, categoria_id)
-    session.delete(db_categoria)
-    session.commit()
+def delete(uow: UnitOfWork, categoria_id: int):
+    db_categoria = get_by_id(uow, categoria_id)
+    uow.categorias.delete(db_categoria)
+    uow.commit()

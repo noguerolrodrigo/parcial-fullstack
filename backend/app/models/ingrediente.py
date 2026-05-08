@@ -11,11 +11,3 @@ class Ingrediente(SQLModel, table=True):
 
     producto_links: List["ProductoIngrediente"] = Relationship(back_populates="ingrediente")
 
-class IngredienteCreate(SQLModel):
-    nombre: str = Field(min_length=2, max_length=100)
-    unidad: str = Field(min_length=1, max_length=20)
-
-class IngredienteRead(SQLModel):
-    id: int
-    nombre: str
-    unidad: str

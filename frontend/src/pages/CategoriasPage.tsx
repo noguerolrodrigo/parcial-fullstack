@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getCategorias, createCategoria, updateCategoria, deleteCategoria } from '../api/api'
-import type { Categoria, CategoriaCreate } from '../types'
+import { getCategorias, createCategoria, updateCategoria, deleteCategoria } from '../api/categorias'
+import type { Categoria, CategoriaCreate } from '../types/categoria'
 
 export default function CategoriasPage() {
   const queryClient = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
   const [editando, setEditando] = useState<Categoria | null>(null)
-  const [form, setForm] = useState<CategoriaCreate>({ nombre: '', descripcion: '' })
+  const [form, setForm] = useState<CategoriaCreate>({ nombre: '', descripcion: '', parent_id: undefined })
 
   const { data: categorias, isLoading, isError } = useQuery({
     queryKey: ['categorias'],
@@ -29,13 +29,19 @@ export default function CategoriasPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categorias'] }),
   })
 
-  const abrirCrear = () => { setEditando(null); setForm({ nombre: '', descripcion: '' }); setModalOpen(true) }
-  const abrirEditar = (c: Categoria) => { setEditando(c); setForm({ nombre: c.nombre, descripcion: c.descripcion || '' }); setModalOpen(true) }
+  const abrirCrear = () => { setEditando(null); setForm({ nombre: '', descripcion: '', parent_id: undefined }); setModalOpen(true) }
+  const abrirEditar = (c: Categoria) => { setEditando(c); setForm({ nombre: c.nombre, descripcion: c.descripcion || '', parent_id: c.parent_id }); setModalOpen(true) }
   const cerrarModal = () => { setModalOpen(false); setEditando(null) }
 
   const handleSubmit = () => {
     if (editando) editarMutation.mutate({ id: editando.id, data: form })
     else crearMutation.mutate(form)
+  }
+
+  const getNombrePadre = (parentId?: number) => {
+    if (!parentId) return '-';
+    const padre = categorias?.find(c => c.id === parentId);
+    return padre ? padre.nombre : '-';
   }
 
   if (isLoading) return <p className="text-center mt-10">Cargando...</p>
@@ -51,8 +57,9 @@ export default function CategoriasPage() {
         <thead className="bg-gray-200">
           <tr>
             <th className="p-3 text-left">ID</th>
-            <th className="p-3 text-left">Nombre</th>
+            <th className="p-3 text-left">Subcategoría</th>
             <th className="p-3 text-left">Descripción</th>
+            <th className="p-3 text-left">Categoría</th>
             <th className="p-3 text-left">Acciones</th>
           </tr>
         </thead>
@@ -62,6 +69,7 @@ export default function CategoriasPage() {
               <td className="p-3">{c.id}</td>
               <td className="p-3">{c.nombre}</td>
               <td className="p-3">{c.descripcion}</td>
+              <td className="p-3">{getNombrePadre(c.parent_id)}</td>
               <td className="p-3 flex gap-2">
                 <button onClick={() => abrirEditar(c)} className="bg-yellow-400 px-3 py-1 rounded hover:bg-yellow-500">Editar</button>
                 <button onClick={() => eliminarMutation.mutate(c.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Eliminar</button>
@@ -79,6 +87,20 @@ export default function CategoriasPage() {
               onChange={e => setForm({ ...form, nombre: e.target.value })} />
             <input className="w-full border p-2 rounded mb-3" placeholder="Descripción" value={form.descripcion}
               onChange={e => setForm({ ...form, descripcion: e.target.value })} />
+            
+            <p className="font-semibold mb-1 text-sm text-gray-600">Categoría:</p>
+            <select 
+              className="w-full border p-2 rounded mb-3" 
+              value={form.parent_id || ''}
+              onChange={e => setForm({ ...form, parent_id: e.target.value ? parseInt(e.target.value) : undefined })}
+            >
+              <option value="">Ninguna (Es categoría principal)</option>
+              {/* MAGIA ACÁ: !c.parent_id hace que solo salgan las categorías principales */}
+              {categorias?.filter(c => !c.parent_id && c.id !== editando?.id).map(c => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+
             <div className="flex gap-2 justify-end">
               <button onClick={cerrarModal} className="px-4 py-2 border rounded">Cancelar</button>
               <button onClick={handleSubmit} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">

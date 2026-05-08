@@ -27,16 +27,3 @@ class Producto(SQLModel, table=True):
     def ingredientes(self):
         return [link.ingrediente for link in self.ingrediente_links if link.ingrediente]
 
-class ProductoCreate(SQLModel):
-    nombre: str = Field(min_length=2, max_length=100)
-    precio: float = Field(gt=0)
-    descripcion: Optional[str] = None
-    categoria_id: Optional[int] = None
-    ingrediente_ids: List[int] = []
-
-class ProductoRead(SQLModel):
-    id: int
-    nombre: str
-    precio: float
-    descripcion: Optional[str] = None
-    categoria_id: Optional[int] = None

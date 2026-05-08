@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { getProductos, createProducto, updateProducto, deleteProducto, getCategorias, getIngredientes } from '../api/api'
-import type { Producto, ProductoCreate } from '../types'
+
+import { getProductos, createProducto, updateProducto, deleteProducto } from '../api/productos'
+import { getCategorias } from '../api/categorias'
+import { getIngredientes } from '../api/ingredientes'
+import type { Producto, ProductoCreate } from '../types/producto'
+
+import ProductoModal from '../components/ProductoModal'
 
 export default function ProductosPage() {
   const queryClient = useQueryClient()
@@ -37,11 +42,10 @@ export default function ProductosPage() {
         precio: p.precio,
         descripcion: p.descripcion || '',
         categoria_id: p.categoria_id,
-        // ACÁ ESTÁ LA MAGIA: Extraemos solo los IDs de los ingredientes que ya tiene
         ingrediente_ids: p.ingredientes ? p.ingredientes.map((i: any) => i.id) : []
     });
     setModalOpen(true);
-}
+  }
   const cerrarModal = () => { setModalOpen(false); setEditando(null) }
 
   const toggleIngrediente = (id: number) => {
@@ -56,7 +60,29 @@ export default function ProductosPage() {
     else crearMutation.mutate(form)
   }
 
-  const getNombreCategoria = (id?: number) => categorias?.find(c => c.id === id)?.nombre || '-'
+  // --- NUEVAS FUNCIONES PARA SEPARAR CATEGORÍA Y SUBCATEGORÍA ---
+  const getCategoriaPrincipal = (id?: number) => {
+    const cat = categorias?.find(c => c.id === id);
+    if (!cat) return '-';
+    // Si la categoría tiene un padre, mostramos el nombre del padre
+    if (cat.parent_id) {
+      const padre = categorias?.find(p => p.id === cat.parent_id);
+      return padre ? padre.nombre : '-';
+    }
+    // Si no tiene padre, ella misma es la principal
+    return cat.nombre;
+  }
+
+  const getSubcategoria = (id?: number) => {
+    const cat = categorias?.find(c => c.id === id);
+    if (!cat) return '-';
+    // Si tiene padre, significa que ella es la subcategoría
+    if (cat.parent_id) {
+      return cat.nombre;
+    }
+    // Si no tiene padre, no hay subcategoría
+    return '-';
+  }
 
   if (isLoading) return <p className="text-center mt-10">Cargando...</p>
   if (isError) return <p className="text-center mt-10 text-red-500">Error al cargar productos</p>
@@ -67,6 +93,7 @@ export default function ProductosPage() {
         <h1 className="text-2xl font-bold">Productos</h1>
         <button onClick={abrirCrear} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Nuevo</button>
       </div>
+      
       <table className="w-full bg-white rounded shadow">
         <thead className="bg-gray-200">
           <tr>
@@ -74,16 +101,24 @@ export default function ProductosPage() {
             <th className="p-3 text-left">Nombre</th>
             <th className="p-3 text-left">Precio</th>
             <th className="p-3 text-left">Categoría</th>
+            <th className="p-3 text-left">Subcategoría</th>
+            <th className="p-3 text-left">Ingredientes</th>
             <th className="p-3 text-left">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {productos?.map(p => (
+          {productos?.map((p: any) => (
             <tr key={p.id} className="border-t">
               <td className="p-3">{p.id}</td>
               <td className="p-3">{p.nombre}</td>
               <td className="p-3">${p.precio}</td>
-              <td className="p-3">{getNombreCategoria(p.categoria_id)}</td>
+              <td className="p-3">{getCategoriaPrincipal(p.categoria_id)}</td>
+              <td className="p-3">{getSubcategoria(p.categoria_id)}</td>
+              <td className="p-3">
+                {p.ingredientes && p.ingredientes.length > 0 
+                  ? p.ingredientes.map((i: any) => i.nombre).join(', ') 
+                  : '-'}
+              </td>
               <td className="p-3 flex gap-2">
                 <Link to={`/productos/${p.id}`} className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">Ver</Link>
                 <button onClick={() => abrirEditar(p)} className="bg-yellow-400 px-3 py-1 rounded hover:bg-yellow-500">Editar</button>
@@ -94,38 +129,17 @@ export default function ProductosPage() {
         </tbody>
       </table>
 
-      {modalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow w-96 max-h-screen overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">{editando ? 'Editar' : 'Nuevo'} Producto</h2>
-            <input className="w-full border p-2 rounded mb-3" placeholder="Nombre" value={form.nombre}
-              onChange={e => setForm({ ...form, nombre: e.target.value })} />
-            <input className="w-full border p-2 rounded mb-3" placeholder="Precio" type="number" value={form.precio}
-              onChange={e => setForm({ ...form, precio: parseFloat(e.target.value) })} />
-            <input className="w-full border p-2 rounded mb-3" placeholder="Descripción" value={form.descripcion}
-              onChange={e => setForm({ ...form, descripcion: e.target.value })} />
-            <select className="w-full border p-2 rounded mb-3" value={form.categoria_id || ''}
-              onChange={e => setForm({ ...form, categoria_id: e.target.value ? parseInt(e.target.value) : undefined })}>
-              <option value="">Sin categoría</option>
-              {categorias?.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </select>
-            <p className="font-semibold mb-2">Ingredientes:</p>
-            {ingredientes?.map(i => (
-              <label key={i.id} className="flex items-center gap-2 mb-1">
-                <input type="checkbox" checked={form.ingrediente_ids.includes(i.id)}
-                  onChange={() => toggleIngrediente(i.id)} />
-                {i.nombre} ({i.unidad})
-              </label>
-            ))}
-            <div className="flex gap-2 justify-end mt-4">
-              <button onClick={cerrarModal} className="px-4 py-2 border rounded">Cancelar</button>
-              <button onClick={handleSubmit} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                {editando ? 'Guardar' : 'Crear'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProductoModal 
+        isOpen={modalOpen} 
+        onClose={cerrarModal} 
+        editando={editando} 
+        form={form} 
+        setForm={setForm} 
+        onSubmit={handleSubmit} 
+        categorias={categorias} 
+        ingredientes={ingredientes} 
+        toggleIngrediente={toggleIngrediente} 
+      />
     </div>
   )
 }
