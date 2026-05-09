@@ -1,18 +1,23 @@
 # Parcial Programación IV - Aplicación Fullstack
 
-## Descripción del Proyecto
-Esta es una aplicación Fullstack desarrollada para el primer parcial de la Tecnicatura Universitaria en Programación (UTN). El sistema gestiona un CRUD completo con relaciones de base de datos 1:N y N:N entre Categorías, Productos e Ingredientes.
+## 📝 Descripción del Proyecto
+Esta es una aplicación Fullstack desarrollada para el primer parcial de la Tecnicatura Universitaria en Programación (UTN). El sistema gestiona un CRUD completo con relaciones de base de datos 1:N y N:M entre Categorías, Productos e Ingredientes.
 
-### Tecnologías Utilizadas
-* **Backend:** FastAPI, Python, SQLModel (ORM y Validación de datos), PostgreSQL.
+### 🚀 Tecnologías y Arquitectura
+* **Backend:** FastAPI, Python, SQLModel (ORM y Validación de datos).
 * **Frontend:** React, TypeScript, Vite, TanStack Query (Server State), Tailwind CSS.
-* **Arquitectura:** Diseño en capas (Routers, Services, Schemas, Models).
+* **Patrones de Diseño Implementados (Requisitos del Parcial):**
+  * Diseño en Arquitectura de Capas (Routers, Services, Models).
+  * Patrón Repositorio (Generic Repository + Repositorios específicos por Entidad).
+  * Unit of Work (UoW) para manejo seguro de transacciones.
+  * Relación Reflexiva en base de datos (Categorías y Subcategorías).
+  * Separación estricta de Schemas (Pydantic).
 
-## Video de Presentación
+## 🎥 Video de Presentación
 En el siguiente enlace se encuentra el video demostrativo de la arquitectura, código fuente y el flujo completo de la aplicación funcionando:
-**Link al video:** [\[https://youtu.be/3Gg7N9zBcsA\]]
+**Link al video:** [https://youtu.be/3Gg7N9zRc5A]
 
-## Instrucciones de Ejecución
+## ⚙️ Instrucciones de Ejecución
 
 ### Backend
 1. Activar el entorno virtual: `.\.venv\Scripts\Activate.ps1`
